@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>阿彌陀籤 - 專業認知訓練版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -13,14 +13,19 @@
             --accent-emerald: #10b981;
         }
 
-        * { box-sizing: border-box; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+        }
 
         body {
             background-color: var(--bg-dark);
             color: #f8fafc;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             overflow: hidden;
+            /* 使用 dvh 解決手機瀏覽器工具欄遮擋問題 */
             height: 100vh;
+            height: 100dvh; 
             width: 100vw;
             display: flex;
             flex-direction: column;
@@ -32,7 +37,7 @@
         }
 
         .settings-collapsed {
-            transform: translateY(-92%);
+            transform: translateY(-94%);
         }
 
         #mainContent {
@@ -47,9 +52,7 @@
         canvas {
             display: block;
             touch-action: none;
-            filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.2));
-            max-height: 100%;
-            max-width: 100%;
+            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.2));
         }
 
         /* 隱藏 YouTube 播放器 */
@@ -63,18 +66,21 @@
 
         /* 標籤發光效果 */
         .label-glow {
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
         }
 
         .label-glow-green {
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
         }
 
         input[type="range"] { cursor: pointer; }
 
         ::-webkit-scrollbar { display: none; }
+
+        /* 針對選單按鈕的特殊處理，避免遮擋字母 */
+        #menuToggleBtn {
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body class="flex flex-col">
@@ -107,7 +113,7 @@
                     </div>
                     <div class="bg-slate-950/50 p-2 px-3 rounded-xl border border-white/5 flex items-center space-x-2">
                         <span class="text-[9px] font-bold text-slate-500 uppercase">速度</span>
-                        <input type="range" id="speedSlider" min="2" max="30" value="15" class="w-full h-1 bg-slate-700 rounded-lg appearance-none accent-rose-500">
+                        <input type="range" id="speedSlider" min="5" max="40" value="20" class="w-full h-1 bg-slate-700 rounded-lg appearance-none accent-rose-500">
                     </div>
                 </div>
 
@@ -128,10 +134,10 @@
                     <button onclick="initGame(true)" class="flex-grow py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all active:scale-95 text-xs shadow-lg shadow-indigo-500/20">
                         下一題 (重生)
                     </button>
-                    <button onclick="clearCurrentPath()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10 text-xs font-bold transition-all active:scale-95">
-                        清除路徑
+                    <button onclick="clearCurrentPath()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10 text-xs font-bold transition-all">
+                        清除
                     </button>
-                    <button onclick="toggleFullscreen()" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10 transition-all">
+                    <button onclick="toggleFullscreen()" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                         </svg>
@@ -139,32 +145,32 @@
                 </div>
             </div>
             
-            <button onclick="toggleSettings()" class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 border border-white/10 px-6 py-1 rounded-b-xl text-[9px] font-black text-slate-400 hover:text-white transition-colors tracking-widest uppercase">
-                選單 (TAB)
+            <button id="menuToggleBtn" onclick="toggleSettings()" class="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-slate-800/90 border border-white/10 px-5 py-1 rounded-b-xl text-[8px] font-black text-slate-400 hover:text-white transition-all tracking-tighter uppercase">
+                MENU (TAB)
             </button>
         </div>
     </div>
 
     <!-- 遊戲區域 -->
-    <main id="mainContent" class="pt-24 pb-2">
-        <div id="gameWrapper" class="relative w-full h-full flex flex-col px-2 md:px-6">
+    <main id="mainContent" class="pt-20 md:pt-24 pb-2">
+        <div id="gameWrapper" class="relative w-full h-full flex flex-col px-2 md:px-6 max-w-5xl mx-auto">
             
-            <!-- 頂部起點 (15%) -->
-            <div id="labelsTop" class="grid w-full h-[15%] items-center"></div>
+            <!-- 頂部起點 (10%) -->
+            <div id="labelsTop" class="grid w-full h-[10%] items-center"></div>
             
-            <!-- 畫布區域 (70%) -->
-            <div id="canvasContainer" class="relative h-[70%] w-full flex items-center justify-center overflow-hidden">
+            <!-- 畫布區域 (80%) -->
+            <div id="canvasContainer" class="relative h-[80%] w-full flex items-center justify-center overflow-hidden bg-slate-900/20 rounded-2xl">
                 <canvas id="kujiCanvas"></canvas>
             </div>
             
-            <!-- 底部終點 (15%) -->
-            <div id="labelsBottom" class="grid w-full h-[15%] items-center"></div>
+            <!-- 底部終點 (10%) -->
+            <div id="labelsBottom" class="grid w-full h-[10%] items-center"></div>
         </div>
     </main>
 
     <!-- 狀態顯示 -->
-    <div id="statusToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-8 py-3 rounded-2xl shadow-2xl opacity-0 transition-all transform translate-y-10 pointer-events-none text-base font-black z-[100] border-2 border-white/20">
-        準備好了！
+    <div id="statusToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-6 py-2 rounded-2xl shadow-2xl opacity-0 transition-all transform translate-y-10 pointer-events-none text-sm font-black z-[100] border border-white/20">
+        READY
     </div>
 
     <script>
@@ -207,7 +213,7 @@
             const gain = audioCtx.createGain();
             osc.type = type;
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1 * masterVol * volumeMult, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08 * masterVol * volumeMult, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(); osc.stop(audioCtx.currentTime + duration);
@@ -215,11 +221,11 @@
 
         const sfx = {
             click: () => playTone(600, 'sine', 0.1),
-            step: () => playTone(300, 'triangle', 0.05, 0.5),
+            step: () => playTone(300, 'triangle', 0.05, 0.4),
             success: () => {
-                playTone(523, 'sine', 0.2);
-                setTimeout(() => playTone(659, 'sine', 0.2), 100);
-                setTimeout(() => playTone(783, 'sine', 0.4), 200);
+                playTone(523, 'sine', 0.15);
+                setTimeout(() => playTone(659, 'sine', 0.15), 80);
+                setTimeout(() => playTone(783, 'sine', 0.3), 160);
             }
         };
 
@@ -243,14 +249,15 @@
                 mainContent.style.paddingTop = '1rem';
             } else {
                 settingsPanel.classList.remove('settings-collapsed');
-                mainContent.style.paddingTop = '6rem';
+                mainContent.style.paddingTop = '6.5rem';
             }
+            // 延遲更新以獲取正確的容器高度
             setTimeout(() => initGame(false), 450);
         }
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
+                document.documentElement.requestFullscreen().catch(() => {});
             } else if (document.exitFullscreen) {
                 document.exitFullscreen();
             }
@@ -266,17 +273,19 @@
         function initGame(regenerate = true) {
             if (isAnimating) return;
             
+            // 嘗試恢復播放
             if (player && player.getPlayerState() !== 1) player.playVideo();
 
             const container = document.getElementById('canvasContainer');
             const rect = container.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
             
+            // 使用實體像素處理，確保高清屏清晰度
+            const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             canvas.style.width = `${rect.width}px`;
             canvas.style.height = `${rect.height}px`;
-            ctx.scale(dpr, dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
             if (regenerate || horizontalRungs.length === 0) {
                 generateRungs();
@@ -287,11 +296,11 @@
 
         function generateRungs() {
             horizontalRungs = [];
-            const rungCount = Math.floor(lineCount * 3.8);
+            const rungCount = Math.floor(lineCount * 3.5);
             for (let i = 0; i < rungCount; i++) {
                 const startLine = Math.floor(Math.random() * (lineCount - 1));
-                const y = Math.random() * 0.84 + 0.08;
-                const overlap = horizontalRungs.some(r => r.line === startLine && Math.abs(r.y - y) < 0.07);
+                const y = Math.random() * 0.86 + 0.07;
+                const overlap = horizontalRungs.some(r => r.line === startLine && Math.abs(r.y - y) < 0.08);
                 if (!overlap) horizontalRungs.push({ line: startLine, y: y });
             }
             horizontalRungs.sort((a, b) => a.y - b.y);
@@ -310,15 +319,17 @@
             
             for (let i = 0; i < lineCount; i++) {
                 const x = getLineX(i);
+                // 底色
                 ctx.beginPath();
-                ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 14;
+                ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 10;
                 ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+                // 亮色主線
                 ctx.beginPath();
-                ctx.strokeStyle = '#334155'; ctx.lineWidth = 4;
+                ctx.strokeStyle = '#334155'; ctx.lineWidth = 3;
                 ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
             }
             
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 3;
             ctx.strokeStyle = '#334155';
             horizontalRungs.forEach(rung => {
                 const x1 = getLineX(rung.line);
@@ -335,21 +346,23 @@
             top.style = gridStyle; bottom.style = gridStyle;
             top.innerHTML = ''; bottom.innerHTML = '';
             
+            const btnSize = lineCount > 8 ? "w-[90%]" : "w-[80%]";
+            
             for (let i = 0; i < lineCount; i++) {
-                // 頂部字母按鈕
+                // 頂部字母
                 const wrapperT = document.createElement('div');
                 wrapperT.className = "flex justify-center items-center h-full";
                 const btnT = document.createElement('button');
-                btnT.className = `w-[85%] aspect-square max-w-[65px] max-h-[65px] rounded-xl md:rounded-2xl bg-slate-900 border-2 border-indigo-500 text-indigo-400 font-black text-xl md:text-2xl hover:bg-indigo-600 hover:text-white transition-all label-glow active:scale-90`;
+                btnT.className = `${btnSize} aspect-square max-w-[55px] max-h-[55px] rounded-xl bg-slate-900 border-2 border-indigo-500 text-indigo-400 font-black text-lg md:text-xl label-glow active:scale-90 active:bg-indigo-600 active:text-white transition-all`;
                 btnT.innerText = String.fromCharCode(65 + i);
                 btnT.onclick = () => { sfx.click(); startTrace(i, 'down'); };
                 wrapperT.appendChild(btnT); top.appendChild(wrapperT);
                 
-                // 底部數字按鈕 (反向追蹤)
+                // 底部數字
                 const wrapperB = document.createElement('div');
                 wrapperB.className = "flex justify-center items-center h-full";
                 const btnB = document.createElement('button');
-                btnB.className = `w-[85%] aspect-square max-w-[65px] max-h-[65px] flex items-center justify-center font-black text-xl md:text-2xl text-emerald-400 bg-slate-900 border-2 border-emerald-500 rounded-xl md:rounded-2xl label-glow-green hover:bg-emerald-600 hover:text-white transition-all active:scale-90`;
+                btnB.className = `${btnSize} aspect-square max-w-[55px] max-h-[55px] flex items-center justify-center font-black text-lg md:text-xl text-emerald-400 bg-slate-900 border-2 border-emerald-500 rounded-xl label-glow-green active:scale-90 active:bg-emerald-600 active:text-white transition-all`;
                 btnB.innerText = (i + 1).toString();
                 btnB.onclick = () => { sfx.click(); startTrace(i, 'up'); };
                 wrapperB.appendChild(btnB); bottom.appendChild(wrapperB);
@@ -365,7 +378,6 @@
             let pathPoints = [];
 
             if (direction === 'down') {
-                showToast("追蹤中：往下走...");
                 pathPoints.push({x: getLineX(currentLine), y: 0});
                 for (let rung of horizontalRungs) {
                     if (rung.line === currentLine) {
@@ -380,7 +392,6 @@
                 }
                 pathPoints.push({x: getLineX(currentLine), y: h});
             } else {
-                showToast("逆推中：往上追...");
                 pathPoints.push({x: getLineX(currentLine), y: h});
                 const reversedRungs = [...horizontalRungs].reverse();
                 for (let rung of reversedRungs) {
@@ -406,26 +417,32 @@
         }
 
         async function animatePath(points) {
-            const speed = parseInt(speedSlider.value);
+            const speedBase = parseInt(speedSlider.value);
+            
             for (let i = 0; i < points.length - 1; i++) {
                 const start = points[i]; const end = points[i + 1];
                 const dist = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
-                const steps = Math.max(1, Math.floor(dist / (speed * 1.5)));
+                const steps = Math.max(1, Math.floor(dist / (speedBase * 0.8)));
                 if (i > 0) sfx.step();
 
                 for (let s = 0; s <= steps; s++) {
                     const p = s / steps;
                     const curX = start.x + (end.x - start.x) * p;
                     const curY = start.y + (end.y - start.y) * p;
-                    drawBoard();
-                    ctx.shadowBlur = 15; ctx.shadowColor = '#f43f5e';
-                    ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 12;
+                    
+                    // 優化繪圖：不清除背景，而是疊加繪製，或只繪製路徑
+                    drawBoard(); 
+                    
+                    ctx.shadowBlur = 10; ctx.shadowColor = '#f43f5e';
+                    ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 10;
                     ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
                     for(let j=0; j<i; j++) ctx.lineTo(points[j+1].x, points[j+1].y);
                     ctx.lineTo(curX, curY); ctx.stroke();
-                    ctx.shadowBlur = 25; ctx.fillStyle = '#fff';
-                    ctx.beginPath(); ctx.arc(curX, curY, 12, 0, Math.PI * 2); ctx.fill();
+                    
+                    ctx.shadowBlur = 15; ctx.fillStyle = '#fff';
+                    ctx.beginPath(); ctx.arc(curX, curY, 10, 0, Math.PI * 2); ctx.fill();
                     ctx.shadowBlur = 0;
+                    
                     await new Promise(r => requestAnimationFrame(r));
                 }
             }
@@ -452,7 +469,13 @@
         }
 
         window.addEventListener('keydown', (e) => { if (e.key === 'Tab') { e.preventDefault(); toggleSettings(); } });
-        window.onresize = () => setTimeout(() => initGame(false), 200);
+        
+        // 監聽視窗變化，包括手機工具欄彈出
+        window.addEventListener('resize', () => {
+            clearTimeout(window.resizeTimer);
+            window.resizeTimer = setTimeout(() => initGame(false), 200);
+        });
+
         window.onload = () => initGame(true);
     </script>
 </body>
