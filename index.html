@@ -13,6 +13,8 @@
             --accent-emerald: #10b981;
         }
 
+        * { box-sizing: border-box; }
+
         body {
             background-color: var(--bg-dark);
             color: #f8fafc;
@@ -20,28 +22,38 @@
             overflow: hidden;
             height: 100vh;
             width: 100vw;
+            display: flex;
+            flex-direction: column;
         }
 
         /* 設定面板轉場 */
         .settings-container {
-            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
         }
 
         .settings-collapsed {
-            transform: translateY(-94%);
+            transform: translateY(-92%);
         }
 
+        /* 遊戲區域適應螢幕高度 */
         #mainContent {
-            transition: padding-top 0.5s ease;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            transition: padding-top 0.4s ease;
+            height: 100%;
+            width: 100%;
         }
 
         canvas {
             display: block;
             touch-action: none;
             filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.2));
+            max-height: 100%;
+            max-width: 100%;
         }
 
-        /* 隱藏 YouTube 播放器但保持運作 */
+        /* 隱藏 YouTube 播放器 */
         #youtubePlayerContainer {
             position: absolute;
             width: 1px;
@@ -50,178 +62,163 @@
             left: -100px;
         }
 
-        input[type="range"] {
-            cursor: pointer;
-        }
-
         /* 標籤發光效果 */
         .label-glow {
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
             text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
         }
+
+        input[type="range"] { cursor: pointer; }
 
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="flex flex-col">
 
-    <!-- YouTube 隱藏播放器 -->
+    <!-- YouTube 隱藏播放器 (使用影片 ID: fS-glIMAoUM) -->
     <div id="youtubePlayerContainer">
         <div id="player"></div>
     </div>
 
     <!-- 設定面板 -->
-    <div id="settingsPanel" class="settings-container fixed top-0 left-0 w-full z-50 p-2 md:p-4">
-        <div class="max-w-6xl mx-auto bg-slate-900/95 backdrop-blur-2xl p-4 md:p-6 rounded-3xl shadow-2xl border border-white/10">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+    <div id="settingsPanel" class="settings-container fixed top-0 left-0 w-full z-50 p-2 md:p-3">
+        <div class="max-w-6xl mx-auto bg-slate-900/95 backdrop-blur-2xl p-4 rounded-3xl shadow-2xl border border-white/10">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
                 
                 <!-- 標題與設計者 -->
                 <div class="md:col-span-3 text-center md:text-left">
-                    <h1 class="text-xl md:text-2xl font-black bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">視覺追蹤訓練</h1>
-                    <p class="text-[10px] text-slate-400 font-bold mt-1">設計者：愛迪樂 鍾孟修 職能治療師</p>
+                    <h1 class="text-xl font-black bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent leading-tight">視覺追蹤訓練</h1>
+                    <p class="text-[9px] text-slate-400 font-bold">設計者：愛迪樂 鍾孟修 職能治療師</p>
                 </div>
 
                 <!-- 遊戲控制 -->
-                <div class="md:col-span-4 grid grid-cols-2 gap-3">
-                    <div class="bg-slate-950/50 p-2 px-3 rounded-2xl border border-white/5 flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase">線條</span>
+                <div class="md:col-span-3 grid grid-cols-2 gap-2">
+                    <div class="bg-slate-950/50 p-2 px-3 rounded-xl border border-white/5 flex items-center justify-between">
+                        <span class="text-[9px] font-bold text-slate-500 uppercase">線條</span>
                         <div class="flex items-center space-x-2">
-                            <button onclick="changeLineCount(-1)" class="w-7 h-7 hover:bg-indigo-500/20 rounded-full text-indigo-400">－</button>
-                            <span id="lineCountDisplay" class="text-lg font-black text-white w-5 text-center">4</span>
-                            <button onclick="changeLineCount(1)" class="w-7 h-7 hover:bg-indigo-500/20 rounded-full text-indigo-400">＋</button>
+                            <button onclick="changeLineCount(-1)" class="w-6 h-6 hover:bg-indigo-500/20 rounded-full text-indigo-400 font-bold">－</button>
+                            <span id="lineCountDisplay" class="text-base font-black text-white w-4 text-center">4</span>
+                            <button onclick="changeLineCount(1)" class="w-6 h-6 hover:bg-indigo-500/20 rounded-full text-indigo-400 font-bold">＋</button>
                         </div>
                     </div>
-                    <div class="bg-slate-950/50 p-2 px-3 rounded-2xl border border-white/5 flex items-center space-x-2">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase">速度</span>
-                        <input type="range" id="speedSlider" min="2" max="25" value="12" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none accent-rose-500">
+                    <div class="bg-slate-950/50 p-2 px-3 rounded-xl border border-white/5 flex items-center space-x-2">
+                        <span class="text-[9px] font-bold text-slate-500 uppercase">速度</span>
+                        <input type="range" id="speedSlider" min="2" max="30" value="15" class="w-full h-1 bg-slate-700 rounded-lg appearance-none accent-rose-500">
                     </div>
                 </div>
 
                 <!-- 音量控制 -->
-                <div class="md:col-span-3 grid grid-cols-2 gap-3">
-                    <div class="bg-slate-950/50 p-2 px-3 rounded-2xl border border-white/5 flex flex-col justify-center">
-                        <span class="text-[9px] font-bold text-slate-500 uppercase mb-1">音效音量</span>
+                <div class="md:col-span-3 grid grid-cols-2 gap-2">
+                    <div class="bg-slate-950/50 p-2 px-3 rounded-xl border border-white/5 flex flex-col justify-center">
+                        <span class="text-[8px] font-bold text-slate-500 uppercase mb-1">音效</span>
                         <input type="range" id="sfxVolume" min="0" max="100" value="70" class="w-full h-1 bg-slate-700 rounded-lg appearance-none accent-indigo-400">
                     </div>
-                    <div class="bg-slate-950/50 p-2 px-3 rounded-2xl border border-white/5 flex flex-col justify-center">
-                        <span class="text-[9px] font-bold text-slate-500 uppercase mb-1">背景音樂</span>
-                        <input type="range" id="bgmVolume" min="0" max="100" value="50" oninput="updateMusicVolume(this.value)" class="w-full h-1 bg-slate-700 rounded-lg appearance-none accent-emerald-400">
+                    <div class="bg-slate-950/50 p-2 px-3 rounded-xl border border-white/5 flex flex-col justify-center">
+                        <span class="text-[8px] font-bold text-slate-500 uppercase mb-1">音樂</span>
+                        <input type="range" id="bgmVolume" min="0" max="100" value="40" oninput="updateMusicVolume(this.value)" class="w-full h-1 bg-slate-700 rounded-lg appearance-none accent-emerald-400">
                     </div>
                 </div>
 
                 <!-- 按鈕組 -->
-                <div class="md:col-span-2 flex gap-2">
-                    <button onclick="initGame()" class="flex-grow py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all active:scale-95 text-sm shadow-lg shadow-indigo-500/20">
-                        重生
+                <div class="md:col-span-3 flex gap-2">
+                    <button onclick="initGame()" class="flex-grow py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all active:scale-95 text-xs shadow-lg shadow-indigo-500/20">
+                        重生/開始音樂
                     </button>
                     <button onclick="toggleFullscreen()" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                         </svg>
                     </button>
                 </div>
             </div>
             
-            <button onclick="toggleSettings()" class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-slate-800 border border-white/10 px-8 py-1 rounded-b-2xl text-[10px] font-black text-slate-400 hover:text-white transition-colors tracking-widest">
-                MENU (TAB)
+            <button onclick="toggleSettings()" class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 border border-white/10 px-6 py-1 rounded-b-xl text-[9px] font-black text-slate-400 hover:text-white transition-colors tracking-widest">
+                選單 (TAB)
             </button>
         </div>
     </div>
 
     <!-- 遊戲區域 -->
-    <main id="mainContent" class="flex-grow flex flex-col items-center justify-center pt-32 pb-6 overflow-hidden">
-        <div id="gameWrapper" class="relative w-full h-full max-w-[1600px] flex flex-col px-4">
+    <main id="mainContent" class="pt-24 pb-2">
+        <div id="gameWrapper" class="relative w-full h-full flex flex-col px-2 md:px-6">
             
-            <!-- 頂部起點 -->
-            <div id="labelsTop" class="grid w-full h-20 items-center"></div>
+            <!-- 頂部起點 (高度佔比 15%) -->
+            <div id="labelsTop" class="grid w-full h-[15%] items-center"></div>
             
-            <!-- 畫布區域 -->
-            <div id="canvasContainer" class="relative flex-grow w-full flex items-center justify-center">
+            <!-- 畫布區域 (高度佔比 70%) -->
+            <div id="canvasContainer" class="relative h-[70%] w-full flex items-center justify-center overflow-hidden">
                 <canvas id="kujiCanvas"></canvas>
             </div>
             
-            <!-- 底部終點 -->
-            <div id="labelsBottom" class="grid w-full h-20 items-center"></div>
+            <!-- 底部終點 (高度佔比 15%) -->
+            <div id="labelsBottom" class="grid w-full h-[15%] items-center"></div>
         </div>
     </main>
 
     <!-- 狀態顯示 -->
-    <div id="statusToast" class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-10 py-4 rounded-3xl shadow-2xl opacity-0 transition-all transform translate-y-10 pointer-events-none text-xl font-black z-[100] border-2 border-white/20">
-        READY
+    <div id="statusToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-8 py-3 rounded-2xl shadow-2xl opacity-0 transition-all transform translate-y-10 pointer-events-none text-base font-black z-[100] border-2 border-white/20">
+        準備好了！
     </div>
 
     <script>
         // --- YouTube API ---
         let player;
+        const videoId = 'fS-glIMAoUM'; // 您的音樂 ID
+
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
-                height: '0',
-                width: '0',
-                videoId: 'JqzXnqdmgs8',
+                height: '0', width: '0',
+                videoId: videoId,
                 playerVars: {
-                    'autoplay': 1,
-                    'loop': 1,
-                    'playlist': 'JqzXnqdmgs8',
-                    'controls': 0,
-                    'showinfo': 0,
-                    'rel': 0
+                    'autoplay': 1, 'loop': 1, 'playlist': videoId,
+                    'controls': 0, 'showinfo': 0, 'rel': 0
                 },
-                events: {
-                    'onReady': onPlayerReady
-                }
+                events: { 'onReady': onPlayerReady }
             });
         }
 
         function onPlayerReady(event) {
             event.target.setVolume(document.getElementById('bgmVolume').value);
+            // 嘗試播放，通常需要點擊後才能成功
             event.target.playVideo();
         }
 
         function updateMusicVolume(val) {
-            if (player && player.setVolume) {
-                player.setVolume(val);
-            }
+            if (player && player.setVolume) player.setVolume(val);
         }
 
-        // 載入 YouTube SDK
+        // 載入 SDK
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         const firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // --- 音效合成器 (Web Audio API) ---
+        // --- 音效合成器 ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playTone(freq, type, duration, volumeMult = 1) {
             const masterVol = document.getElementById('sfxVolume').value / 100;
             if (masterVol <= 0) return;
-
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            
             osc.type = type;
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            
             gain.gain.setValueAtTime(0.1 * masterVol * volumeMult, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
         }
 
         const sfx = {
             click: () => playTone(600, 'sine', 0.1),
             step: () => playTone(300, 'triangle', 0.05, 0.5),
             success: () => {
-                playTone(523.25, 'sine', 0.2); // C5
-                setTimeout(() => playTone(659.25, 'sine', 0.2), 100); // E5
-                setTimeout(() => playTone(783.99, 'sine', 0.4), 200); // G5
+                playTone(523, 'sine', 0.2);
+                setTimeout(() => playTone(659, 'sine', 0.2), 100);
+                setTimeout(() => playTone(783, 'sine', 0.4), 200);
             }
         };
 
-        // --- 核心遊戲邏輯 ---
+        // --- 核心邏輯 ---
         const canvas = document.getElementById('kujiCanvas');
         const ctx = canvas.getContext('2d');
         const speedSlider = document.getElementById('speedSlider');
@@ -238,28 +235,33 @@
             isSettingsCollapsed = !isSettingsCollapsed;
             if (isSettingsCollapsed) {
                 settingsPanel.classList.add('settings-collapsed');
-                mainContent.style.paddingTop = '2rem';
+                mainContent.style.paddingTop = '1rem';
             } else {
                 settingsPanel.classList.remove('settings-collapsed');
-                mainContent.style.paddingTop = '8rem';
+                mainContent.style.paddingTop = '6rem';
             }
-            setTimeout(initGame, 550);
+            setTimeout(initGame, 450);
         }
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen();
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
             }
-            setTimeout(initGame, 500);
+            setTimeout(initGame, 400);
         }
 
         function initGame() {
             if (isAnimating) return;
+            
+            // 觸發音樂播放 (瀏覽器安全機制：需互動)
+            if (player && player.getPlayerState() !== 1) player.playVideo();
+
             const container = document.getElementById('canvasContainer');
             const rect = container.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
+            
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
             canvas.style.width = `${rect.width}px`;
@@ -276,7 +278,7 @@
             const rungCount = Math.floor(lineCount * 3.5);
             for (let i = 0; i < rungCount; i++) {
                 const startLine = Math.floor(Math.random() * (lineCount - 1));
-                const y = Math.random() * 0.8 + 0.1;
+                const y = Math.random() * 0.84 + 0.08;
                 const overlap = horizontalRungs.some(r => r.line === startLine && Math.abs(r.y - y) < 0.08);
                 if (!overlap) horizontalRungs.push({ line: startLine, y: y });
             }
@@ -284,8 +286,8 @@
         }
 
         function getLineX(index) {
-            const containerWidth = canvas.width / (window.devicePixelRatio || 1);
-            return (containerWidth / lineCount) * (index + 0.5);
+            const w = canvas.width / (window.devicePixelRatio || 1);
+            return (w / lineCount) * (index + 0.5);
         }
 
         function drawBoard() {
@@ -297,27 +299,20 @@
             for (let i = 0; i < lineCount; i++) {
                 const x = getLineX(i);
                 ctx.beginPath();
-                ctx.strokeStyle = '#0f172a';
-                ctx.lineWidth = 14;
-                ctx.moveTo(x, 0); ctx.lineTo(x, h);
-                ctx.stroke();
-
+                ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 12;
+                ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
                 ctx.beginPath();
-                ctx.strokeStyle = '#334155';
-                ctx.lineWidth = 5;
-                ctx.moveTo(x, 0); ctx.lineTo(x, h);
-                ctx.stroke();
+                ctx.strokeStyle = '#334155'; ctx.lineWidth = 4;
+                ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
             }
             
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 4;
             ctx.strokeStyle = '#334155';
             horizontalRungs.forEach(rung => {
                 const x1 = getLineX(rung.line);
                 const x2 = getLineX(rung.line + 1);
                 const y = rung.y * h;
-                ctx.beginPath();
-                ctx.moveTo(x1, y); ctx.lineTo(x2, y);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
             });
         }
 
@@ -329,35 +324,29 @@
             top.innerHTML = ''; bottom.innerHTML = '';
             
             for (let i = 0; i < lineCount; i++) {
-                // 頂部按鈕
+                // 頂部
                 const wrapperT = document.createElement('div');
-                wrapperT.className = "flex justify-center items-center";
+                wrapperT.className = "flex justify-center items-center h-full";
                 const btn = document.createElement('button');
-                btn.className = `w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-900 border-2 border-indigo-500 text-indigo-400 font-black text-2xl hover:bg-indigo-600 hover:text-white transition-all label-glow active:scale-90`;
+                btn.className = `w-[80%] aspect-square max-w-[60px] max-h-[60px] rounded-xl md:rounded-2xl bg-slate-900 border-2 border-indigo-500 text-indigo-400 font-black text-xl md:text-2xl hover:bg-indigo-600 hover:text-white transition-all label-glow active:scale-90`;
                 btn.innerText = String.fromCharCode(65 + i);
-                btn.onclick = () => {
-                    sfx.click();
-                    if (!isSettingsCollapsed) toggleSettings();
-                    startTrace(i);
-                };
-                wrapperT.appendChild(btn);
-                top.appendChild(wrapperT);
+                btn.onclick = () => { sfx.click(); if(!isSettingsCollapsed) toggleSettings(); startTrace(i); };
+                wrapperT.appendChild(btn); top.appendChild(wrapperT);
                 
-                // 底部按鈕 (現在一樣亮眼)
+                // 底部 (與頂部一樣清晰亮麗)
                 const wrapperB = document.createElement('div');
-                wrapperB.className = "flex justify-center items-center";
+                wrapperB.className = "flex justify-center items-center h-full";
                 const target = document.createElement('div');
-                target.className = "w-14 h-14 md:w-16 md:h-16 flex items-center justify-center font-black text-2xl text-emerald-400 bg-slate-900 border-2 border-emerald-500/50 rounded-2xl label-glow";
+                target.className = "w-[80%] aspect-square max-w-[60px] max-h-[60px] flex items-center justify-center font-black text-xl md:text-2xl text-emerald-400 bg-slate-900 border-2 border-emerald-500 rounded-xl md:rounded-2xl label-glow";
                 target.innerText = (i + 1).toString();
-                wrapperB.appendChild(target);
-                bottom.appendChild(wrapperB);
+                wrapperB.appendChild(target); bottom.appendChild(wrapperB);
             }
         }
 
         async function startTrace(startIndex) {
             if (isAnimating) return;
             isAnimating = true;
-            showToast("請眼睛緊跟紅點...");
+            showToast("開始追蹤！");
             
             const h = canvas.height / (window.devicePixelRatio || 1);
             let currentLine = startIndex;
@@ -379,36 +368,30 @@
             
             isAnimating = false;
             sfx.success();
-            showToast(`到達：${currentLine + 1} 號！`, true);
+            showToast(`成功到達 ${currentLine + 1} 號！`, true);
             setTimeout(() => { if (isSettingsCollapsed) toggleSettings(); }, 2500);
         }
 
         async function animatePath(points) {
             const speed = parseInt(speedSlider.value);
             for (let i = 0; i < points.length - 1; i++) {
-                const start = points[i];
-                const end = points[i + 1];
+                const start = points[i]; const end = points[i + 1];
                 const dist = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
                 const steps = Math.max(1, Math.floor(dist / (speed * 1.2)));
-                
-                // 每次轉向發出微弱音效
                 if (i > 0) sfx.step();
 
                 for (let s = 0; s <= steps; s++) {
                     const p = s / steps;
                     const curX = start.x + (end.x - start.x) * p;
                     const curY = start.y + (end.y - start.y) * p;
-                    
                     drawBoard();
-                    ctx.shadowBlur = 20; ctx.shadowColor = '#f43f5e';
+                    ctx.shadowBlur = 15; ctx.shadowColor = '#f43f5e';
                     ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 10;
-                    ctx.beginPath();
-                    ctx.moveTo(points[0].x, points[0].y);
+                    ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
                     for(let j=0; j<i; j++) ctx.lineTo(points[j+1].x, points[j+1].y);
                     ctx.lineTo(curX, curY); ctx.stroke();
-                    
-                    ctx.shadowBlur = 25; ctx.fillStyle = '#ffffff';
-                    ctx.beginPath(); ctx.arc(curX, curY, 12, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 20; ctx.fillStyle = '#fff';
+                    ctx.beginPath(); ctx.arc(curX, curY, 10, 0, Math.PI * 2); ctx.fill();
                     ctx.shadowBlur = 0;
                     await new Promise(r => requestAnimationFrame(r));
                 }
@@ -421,8 +404,7 @@
             if (next >= 2 && next <= 12) {
                 lineCount = next;
                 document.getElementById('lineCountDisplay').innerText = lineCount;
-                sfx.click();
-                initGame();
+                sfx.click(); initGame();
             }
         }
 
@@ -433,7 +415,7 @@
             setTimeout(() => {
                 statusToast.style.opacity = '0';
                 statusToast.style.transform = 'translate(-50%, 2rem)';
-            }, isLong ? 3500 : 2000);
+            }, isLong ? 3000 : 1500);
         }
 
         window.addEventListener('keydown', (e) => { if (e.key === 'Tab') { e.preventDefault(); toggleSettings(); } });
