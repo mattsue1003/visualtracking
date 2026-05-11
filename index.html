@@ -35,7 +35,6 @@
             transform: translateY(-92%);
         }
 
-        /* 遊戲區域適應螢幕高度 */
         #mainContent {
             flex: 1;
             display: flex;
@@ -68,6 +67,11 @@
             text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
         }
 
+        .label-glow-green {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+
         input[type="range"] { cursor: pointer; }
 
         ::-webkit-scrollbar { display: none; }
@@ -75,7 +79,7 @@
 </head>
 <body class="flex flex-col">
 
-    <!-- YouTube 隱藏播放器 (使用影片 ID: fS-glIMAoUM) -->
+    <!-- YouTube 隱藏播放器 -->
     <div id="youtubePlayerContainer">
         <div id="player"></div>
     </div>
@@ -121,8 +125,11 @@
 
                 <!-- 按鈕組 -->
                 <div class="md:col-span-3 flex gap-2">
-                    <button onclick="initGame()" class="flex-grow py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all active:scale-95 text-xs shadow-lg shadow-indigo-500/20">
-                        重生/開始音樂
+                    <button onclick="initGame(true)" class="flex-grow py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all active:scale-95 text-xs shadow-lg shadow-indigo-500/20">
+                        下一題 (重生)
+                    </button>
+                    <button onclick="clearCurrentPath()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10 text-xs font-bold transition-all active:scale-95">
+                        清除路徑
                     </button>
                     <button onclick="toggleFullscreen()" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-white/10 transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,7 +139,7 @@
                 </div>
             </div>
             
-            <button onclick="toggleSettings()" class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 border border-white/10 px-6 py-1 rounded-b-xl text-[9px] font-black text-slate-400 hover:text-white transition-colors tracking-widest">
+            <button onclick="toggleSettings()" class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 border border-white/10 px-6 py-1 rounded-b-xl text-[9px] font-black text-slate-400 hover:text-white transition-colors tracking-widest uppercase">
                 選單 (TAB)
             </button>
         </div>
@@ -142,15 +149,15 @@
     <main id="mainContent" class="pt-24 pb-2">
         <div id="gameWrapper" class="relative w-full h-full flex flex-col px-2 md:px-6">
             
-            <!-- 頂部起點 (高度佔比 15%) -->
+            <!-- 頂部起點 (15%) -->
             <div id="labelsTop" class="grid w-full h-[15%] items-center"></div>
             
-            <!-- 畫布區域 (高度佔比 70%) -->
+            <!-- 畫布區域 (70%) -->
             <div id="canvasContainer" class="relative h-[70%] w-full flex items-center justify-center overflow-hidden">
                 <canvas id="kujiCanvas"></canvas>
             </div>
             
-            <!-- 底部終點 (高度佔比 15%) -->
+            <!-- 底部終點 (15%) -->
             <div id="labelsBottom" class="grid w-full h-[15%] items-center"></div>
         </div>
     </main>
@@ -163,7 +170,7 @@
     <script>
         // --- YouTube API ---
         let player;
-        const videoId = 'fS-glIMAoUM'; // 您的音樂 ID
+        const videoId = 'fS-glIMAoUM';
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
@@ -179,7 +186,6 @@
 
         function onPlayerReady(event) {
             event.target.setVolume(document.getElementById('bgmVolume').value);
-            // 嘗試播放，通常需要點擊後才能成功
             event.target.playVideo();
         }
 
@@ -187,7 +193,6 @@
             if (player && player.setVolume) player.setVolume(val);
         }
 
-        // 載入 SDK
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -240,7 +245,7 @@
                 settingsPanel.classList.remove('settings-collapsed');
                 mainContent.style.paddingTop = '6rem';
             }
-            setTimeout(initGame, 450);
+            setTimeout(() => initGame(false), 450);
         }
 
         function toggleFullscreen() {
@@ -249,13 +254,18 @@
             } else if (document.exitFullscreen) {
                 document.exitFullscreen();
             }
-            setTimeout(initGame, 400);
+            setTimeout(() => initGame(false), 400);
         }
 
-        function initGame() {
+        function clearCurrentPath() {
+            if (isAnimating) return;
+            drawBoard();
+            showToast("路徑已清除");
+        }
+
+        function initGame(regenerate = true) {
             if (isAnimating) return;
             
-            // 觸發音樂播放 (瀏覽器安全機制：需互動)
             if (player && player.getPlayerState() !== 1) player.playVideo();
 
             const container = document.getElementById('canvasContainer');
@@ -268,18 +278,20 @@
             canvas.style.height = `${rect.height}px`;
             ctx.scale(dpr, dpr);
 
-            generateRungs();
+            if (regenerate || horizontalRungs.length === 0) {
+                generateRungs();
+            }
             createLabels();
             drawBoard();
         }
 
         function generateRungs() {
             horizontalRungs = [];
-            const rungCount = Math.floor(lineCount * 3.5);
+            const rungCount = Math.floor(lineCount * 3.8);
             for (let i = 0; i < rungCount; i++) {
                 const startLine = Math.floor(Math.random() * (lineCount - 1));
                 const y = Math.random() * 0.84 + 0.08;
-                const overlap = horizontalRungs.some(r => r.line === startLine && Math.abs(r.y - y) < 0.08);
+                const overlap = horizontalRungs.some(r => r.line === startLine && Math.abs(r.y - y) < 0.07);
                 if (!overlap) horizontalRungs.push({ line: startLine, y: y });
             }
             horizontalRungs.sort((a, b) => a.y - b.y);
@@ -299,7 +311,7 @@
             for (let i = 0; i < lineCount; i++) {
                 const x = getLineX(i);
                 ctx.beginPath();
-                ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 12;
+                ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 14;
                 ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
                 ctx.beginPath();
                 ctx.strokeStyle = '#334155'; ctx.lineWidth = 4;
@@ -324,52 +336,73 @@
             top.innerHTML = ''; bottom.innerHTML = '';
             
             for (let i = 0; i < lineCount; i++) {
-                // 頂部
+                // 頂部字母按鈕
                 const wrapperT = document.createElement('div');
                 wrapperT.className = "flex justify-center items-center h-full";
-                const btn = document.createElement('button');
-                btn.className = `w-[80%] aspect-square max-w-[60px] max-h-[60px] rounded-xl md:rounded-2xl bg-slate-900 border-2 border-indigo-500 text-indigo-400 font-black text-xl md:text-2xl hover:bg-indigo-600 hover:text-white transition-all label-glow active:scale-90`;
-                btn.innerText = String.fromCharCode(65 + i);
-                btn.onclick = () => { sfx.click(); if(!isSettingsCollapsed) toggleSettings(); startTrace(i); };
-                wrapperT.appendChild(btn); top.appendChild(wrapperT);
+                const btnT = document.createElement('button');
+                btnT.className = `w-[85%] aspect-square max-w-[65px] max-h-[65px] rounded-xl md:rounded-2xl bg-slate-900 border-2 border-indigo-500 text-indigo-400 font-black text-xl md:text-2xl hover:bg-indigo-600 hover:text-white transition-all label-glow active:scale-90`;
+                btnT.innerText = String.fromCharCode(65 + i);
+                btnT.onclick = () => { sfx.click(); startTrace(i, 'down'); };
+                wrapperT.appendChild(btnT); top.appendChild(wrapperT);
                 
-                // 底部 (與頂部一樣清晰亮麗)
+                // 底部數字按鈕 (反向追蹤)
                 const wrapperB = document.createElement('div');
                 wrapperB.className = "flex justify-center items-center h-full";
-                const target = document.createElement('div');
-                target.className = "w-[80%] aspect-square max-w-[60px] max-h-[60px] flex items-center justify-center font-black text-xl md:text-2xl text-emerald-400 bg-slate-900 border-2 border-emerald-500 rounded-xl md:rounded-2xl label-glow";
-                target.innerText = (i + 1).toString();
-                wrapperB.appendChild(target); bottom.appendChild(wrapperB);
+                const btnB = document.createElement('button');
+                btnB.className = `w-[85%] aspect-square max-w-[65px] max-h-[65px] flex items-center justify-center font-black text-xl md:text-2xl text-emerald-400 bg-slate-900 border-2 border-emerald-500 rounded-xl md:rounded-2xl label-glow-green hover:bg-emerald-600 hover:text-white transition-all active:scale-90`;
+                btnB.innerText = (i + 1).toString();
+                btnB.onclick = () => { sfx.click(); startTrace(i, 'up'); };
+                wrapperB.appendChild(btnB); bottom.appendChild(wrapperB);
             }
         }
 
-        async function startTrace(startIndex) {
+        async function startTrace(startIndex, direction) {
             if (isAnimating) return;
             isAnimating = true;
-            showToast("開始追蹤！");
             
             const h = canvas.height / (window.devicePixelRatio || 1);
             let currentLine = startIndex;
-            let pathPoints = [{x: getLineX(currentLine), y: 0}];
-            
-            for (let rung of horizontalRungs) {
-                if (rung.line === currentLine) {
-                    pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
-                    currentLine++;
-                    pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
-                } else if (rung.line === currentLine - 1) {
-                    pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
-                    currentLine--;
-                    pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
+            let pathPoints = [];
+
+            if (direction === 'down') {
+                showToast("追蹤中：往下走...");
+                pathPoints.push({x: getLineX(currentLine), y: 0});
+                for (let rung of horizontalRungs) {
+                    if (rung.line === currentLine) {
+                        pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
+                        currentLine++;
+                        pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
+                    } else if (rung.line === currentLine - 1) {
+                        pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
+                        currentLine--;
+                        pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
+                    }
                 }
+                pathPoints.push({x: getLineX(currentLine), y: h});
+            } else {
+                showToast("逆推中：往上追...");
+                pathPoints.push({x: getLineX(currentLine), y: h});
+                const reversedRungs = [...horizontalRungs].reverse();
+                for (let rung of reversedRungs) {
+                    if (rung.line === currentLine) {
+                        pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
+                        currentLine++;
+                        pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
+                    } else if (rung.line === currentLine - 1) {
+                        pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
+                        currentLine--;
+                        pathPoints.push({x: getLineX(currentLine), y: rung.y * h});
+                    }
+                }
+                pathPoints.push({x: getLineX(currentLine), y: 0});
             }
-            pathPoints.push({x: getLineX(currentLine), y: h});
-            await animatePath(pathPoints);
             
+            await animatePath(pathPoints);
             isAnimating = false;
             sfx.success();
-            showToast(`成功到達 ${currentLine + 1} 號！`, true);
-            setTimeout(() => { if (isSettingsCollapsed) toggleSettings(); }, 2500);
+            
+            const resultMsg = direction === 'down' ? `終點是 ${currentLine + 1} 號！` : `起點是 ${String.fromCharCode(65 + currentLine)}！`;
+            showToast(resultMsg, true);
         }
 
         async function animatePath(points) {
@@ -377,7 +410,7 @@
             for (let i = 0; i < points.length - 1; i++) {
                 const start = points[i]; const end = points[i + 1];
                 const dist = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
-                const steps = Math.max(1, Math.floor(dist / (speed * 1.2)));
+                const steps = Math.max(1, Math.floor(dist / (speed * 1.5)));
                 if (i > 0) sfx.step();
 
                 for (let s = 0; s <= steps; s++) {
@@ -386,12 +419,12 @@
                     const curY = start.y + (end.y - start.y) * p;
                     drawBoard();
                     ctx.shadowBlur = 15; ctx.shadowColor = '#f43f5e';
-                    ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 10;
+                    ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 12;
                     ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
                     for(let j=0; j<i; j++) ctx.lineTo(points[j+1].x, points[j+1].y);
                     ctx.lineTo(curX, curY); ctx.stroke();
-                    ctx.shadowBlur = 20; ctx.fillStyle = '#fff';
-                    ctx.beginPath(); ctx.arc(curX, curY, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 25; ctx.fillStyle = '#fff';
+                    ctx.beginPath(); ctx.arc(curX, curY, 12, 0, Math.PI * 2); ctx.fill();
                     ctx.shadowBlur = 0;
                     await new Promise(r => requestAnimationFrame(r));
                 }
@@ -404,7 +437,7 @@
             if (next >= 2 && next <= 12) {
                 lineCount = next;
                 document.getElementById('lineCountDisplay').innerText = lineCount;
-                sfx.click(); initGame();
+                sfx.click(); initGame(true);
             }
         }
 
@@ -419,8 +452,8 @@
         }
 
         window.addEventListener('keydown', (e) => { if (e.key === 'Tab') { e.preventDefault(); toggleSettings(); } });
-        window.onresize = () => setTimeout(initGame, 200);
-        window.onload = initGame;
+        window.onresize = () => setTimeout(() => initGame(false), 200);
+        window.onload = () => initGame(true);
     </script>
 </body>
 </html>
